@@ -1,5 +1,6 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Control.RichConditional (
 
@@ -30,20 +31,26 @@ type Decision = Either
 class PartialIf a b where
   indicate :: a -> Indication b
 
+instance PartialIf (Maybe a) a where
+  indicate = id
+
 -- | Instances of this class provide a test on some type a with an
 --   alternative case for when it fails. If it passes, it gives a value of
 --   type b; otherwise, it gives a value of type c.
 class TotalIf a b c where
   decide :: a -> Decision b c
 
--- | Replace an if via an PartialIf instance. This is just like the
+instance TotalIf (Either a b) a b where
+  decide = id
+
+-- | A conditional using a PartialIf instance. This is just like the
 --   function 'maybe' which decomposes a Maybe, except that the Maybe
 --   is produced through an PartialIf instance determined by the type of
 --   the positive case.
 inCase :: PartialIf a b => a -> (b -> c) -> c -> c
 inCase x ifYes ifNo = maybe ifNo ifYes (indicate x)
 
--- | Replace an if/else via a TotalIf instance. This is just like the
+-- | A conditional using a TotalIf instance. This is just like the
 --   function 'either' which decomposes an Either, except that the Either
 --   is produced through a TotalIf instance determined by the types of
 --   the cases.
